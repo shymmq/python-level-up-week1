@@ -63,14 +63,17 @@ appointments: List[Appointment] = []
 @app.post("/register", status_code=201)
 async def register(req: Request):
     json = await req.json()
-    if type(json['name']) is str and type(json['surname']) is str:
+    print(json)
+    name_ = json['name']
+    surname_ = json['surname']
+    if type(name_) is str and type(surname_) is str:
         appointment = Appointment(
             id=max([appointment.id for appointment in appointments]) + 1 if appointments else 1,
-            name=json['name'],
-            surname=json['surname'],
+            name=name_,
+            surname=surname_,
             register_date=datetime.date.today().isoformat(),
             vaccination_date=(datetime.date.today() + datetime.timedelta(
-                days=(len(json['name']) + len(json['surname'])))).isoformat())
+                days=(len(name_) + len(surname_)))).isoformat())
         appointments.append(appointment)
         return appointment
     else:
