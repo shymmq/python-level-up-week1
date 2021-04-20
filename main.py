@@ -66,7 +66,7 @@ class Appointment:
 appointments: List[Appointment] = []
 
 
-@app.post("/register")
+@app.post("/register", status_code=201)
 def register(reqbody: RegisterModel):
     appointment = Appointment(
         id=max([appointment.id for appointment in appointments]) + 1 if appointments else 1,
