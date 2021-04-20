@@ -67,13 +67,13 @@ async def register(req: Request):
     name_ = json['name']
     surname_ = json['surname']
     if type(name_) is str and type(surname_) is str:
+        delta = sum(c.isalpha() for c in name_ + surname_)
         appointment = Appointment(
             id=max([appointment.id for appointment in appointments]) + 1 if appointments else 1,
             name=name_,
             surname=surname_,
             register_date=datetime.date.today().isoformat(),
-            vaccination_date=(datetime.date.today() + datetime.timedelta(
-                days=(len(name_) + len(surname_)))).isoformat())
+            vaccination_date=(datetime.date.today() + datetime.timedelta(days=delta)).isoformat())
         appointments.append(appointment)
         return appointment
     else:
