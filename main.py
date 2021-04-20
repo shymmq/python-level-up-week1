@@ -3,9 +3,8 @@ import datetime
 from hashlib import sha512
 from typing import List
 
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
 from fastapi.responses import JSONResponse
-from pydantic import BaseModel
 
 app = FastAPI()
 
@@ -49,11 +48,6 @@ def auth(password='', password_hash=''):
         return JSONResponse(status_code=401)
 
 
-class RegisterModel(BaseModel):
-    name: str
-    surname: str
-
-
 @dataclasses.dataclass
 class Appointment:
     id: int
@@ -67,16 +61,20 @@ appointments: List[Appointment] = []
 
 
 @app.post("/register", status_code=201)
-def register(reqbody: RegisterModel):
-    appointment = Appointment(
-        id=max([appointment.id for appointment in appointments]) + 1 if appointments else 1,
-        name=reqbody.name,
-        surname=reqbody.surname,
-        register_date=datetime.date.today().isoformat(),
-        vaccination_date=(datetime.date.today() + datetime.timedelta(
-            days=(len(reqbody.name) + len(reqbody.surname)))).isoformat())
-    appointments.append(appointment)
-    return appointment
+async def register(req: Request):
+    json = await req.json()
+    if type(json['name']) is str and type(json['surname']) is str:
+        appointment = Appointment(
+            id=max([appointment.id for appointment in appointments]) + 1 if appointments else 1,
+            name=json['name'],
+            surname=json['surname'],
+            register_date=datetime.date.today().isoformat(),
+            vaccination_date=(datetime.date.today() + datetime.timedelta(
+                days=(len(json['name']) + len(json['surname'])))).isoformat())
+        appointments.append(appointment)
+        return appointment
+    else:
+        return JSONResponse(status_code=400)
 
 
 @app.get("/patient/{id}")
