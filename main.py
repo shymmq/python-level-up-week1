@@ -41,9 +41,9 @@ def method():
 
 
 @app.get("/auth")
-def auth(password, password_hash):
+def auth(password='', password_hash=''):
     print(sha512(str(password).encode('utf-8')).__str__())
-    if sha512(str(password).encode('utf-8')).hexdigest() == password_hash:
+    if password != '' and password_hash != '' and sha512(str(password).encode('utf-8')).hexdigest() == password_hash:
         return JSONResponse(status_code=204)
     else:
         return JSONResponse(status_code=401)
