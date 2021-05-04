@@ -138,6 +138,7 @@ def login_token(credentials: HTTPBasicCredentials = Depends(security)):
     else:
         raise HTTPException(401, "Invalid creds")
 
+# 3.3
 
 @app.get("/welcome_session")
 def welcome_session(format: Optional[str] = None, session_token: Optional[str] = Cookie(None)):
@@ -162,14 +163,31 @@ def welcome_token(format: Optional[str] = None, token: Optional[str] = None):
             return PlainTextResponse("Welcome!")
     raise HTTPException(401, "Not authorized")
 
+# 3.4
 
 @app.delete("/logout_session")
-def logout_session(session_token: Optional[str] = Cookie(None)):
-    if session_token == authorized_session:
-        authorized_session = None
-        return RedirectResponse("/logged_out", status_code=301)
+def logout_session(format: Optional[str] = None, session_token: Optional[str] = Cookie(None)):
+    if session_token and session_token in app.authorized_sessions:
+        app.authorized_sessions.remove(session_token)
+        return RedirectResponse(f"/logged_out?format={format}", status_code=303)
+    else:
+        raise HTTPException(401, "Not authorized")
+
+
+@app.delete("/logout_token")
+def logout_token(format: Optional[str] = None, token: Optional[str] = None):
+    if token and token in app.authorized_tokens:
+        app.authorized_tokens.remove(token)
+        return RedirectResponse(f"/logged_out?format={format}", status_code=303)
+    else:
+        raise HTTPException(401, "Not authorized")
 
 
 @app.get("/logged_out")
-def logged_out():
-    return
+def logged_out(format: Optional[str] = None):
+    if format == "json":
+        return {"message": "Logged out!"}
+    elif format == "html":
+        return HTMLResponse(content="<h1>Logged out!</h1>")
+    else:
+        return PlainTextResponse("Logged out!")
