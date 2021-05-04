@@ -9,7 +9,7 @@ from fastapi.responses import JSONResponse
 from fastapi.security import HTTPBasic, HTTPBasicCredentials
 from fastapi.templating import Jinja2Templates
 from starlette.exceptions import HTTPException
-from starlette.responses import HTMLResponse, Response, PlainTextResponse
+from starlette.responses import HTMLResponse, Response, PlainTextResponse, RedirectResponse
 
 app = FastAPI()
 
@@ -114,16 +114,16 @@ security = HTTPBasic()
 username = "4dm1n"
 password = "NotSoSecurePa$$"
 
-authorized_session = None
-authorized_token = None
+app.authorized_sessions = []
+app.authorized_tokens = []
 
 
 @app.post("/login_session", status_code=201)
 def login_session(response: Response, credentials: HTTPBasicCredentials = Depends(security)):
-    global authorized_session
     if credentials.username == username and credentials.password == password:
-        authorized_session = f'{username}:{password}:{datetime.datetime.now()}'
-        response.set_cookie(key="session_token", value=authorized_session)
+        new_session = f'{username}:{password}:{datetime.datetime.now()}'
+        app.authorized_sessions.append(new_session)
+        response.set_cookie(key="session_token", value=new_session)
         return "logged in"
     else:
         raise HTTPException(401, "Invalid creds")
@@ -131,17 +131,17 @@ def login_session(response: Response, credentials: HTTPBasicCredentials = Depend
 
 @app.post("/login_token", status_code=201)
 def login_token(credentials: HTTPBasicCredentials = Depends(security)):
-    global authorized_token
     if credentials.username == username and credentials.password == password:
-        authorized_token = f'{username}:{password}:{datetime.datetime.now()}'
-        return {"token": authorized_token}
+        new_token = f'{username}:{password}:{datetime.datetime.now()}'
+        app.authorized_tokens.append(new_token)
+        return {"token": new_token}
     else:
         raise HTTPException(401, "Invalid creds")
 
 
 @app.get("/welcome_session")
 def welcome_session(format: Optional[str] = None, session_token: Optional[str] = Cookie(None)):
-    if session_token == authorized_session:
+    if session_token and session_token in app.authorized_sessions:
         if format == "json":
             return {"message": "Welcome!"}
         elif format == "html":
@@ -152,8 +152,8 @@ def welcome_session(format: Optional[str] = None, session_token: Optional[str] =
 
 
 @app.get("/welcome_token")
-def welcome_session(format: Optional[str] = None, token: Optional[str] = None):
-    if token == authorized_token:
+def welcome_token(format: Optional[str] = None, token: Optional[str] = None):
+    if token and token in app.authorized_tokens:
         if format == "json":
             return {"message": "Welcome!"}
         elif format == "html":
@@ -161,3 +161,15 @@ def welcome_session(format: Optional[str] = None, token: Optional[str] = None):
         else:
             return PlainTextResponse("Welcome!")
     raise HTTPException(401, "Not authorized")
+
+
+@app.delete("/logout_session")
+def logout_session(session_token: Optional[str] = Cookie(None)):
+    if session_token == authorized_session:
+        authorized_session = None
+        return RedirectResponse("/logged_out", status_code=301)
+
+
+@app.get("/logged_out")
+def logged_out():
+    return
