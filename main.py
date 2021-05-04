@@ -1,7 +1,7 @@
 import dataclasses
 import datetime
 from hashlib import sha512
-from typing import List
+from typing import List, Optional
 
 from fastapi import FastAPI, Request
 from fastapi.params import Depends, Cookie
@@ -140,7 +140,7 @@ def login_token(credentials: HTTPBasicCredentials = Depends(security)):
 
 
 @app.get("/welcome_session")
-def welcome_session(format: str, session_token: str = Cookie(None)):
+def welcome_session(format: Optional[str] = None, session_token: Optional[str] = Cookie(None)):
     if session_token == authorized_session:
         if format == "json":
             return {"message": "Welcome!"}
@@ -152,7 +152,7 @@ def welcome_session(format: str, session_token: str = Cookie(None)):
 
 
 @app.get("/welcome_token")
-def welcome_session(format: str, token: str):
+def welcome_session(format: Optional[str] = None, token: Optional[str] = None):
     if token == authorized_token:
         if format == "json":
             return {"message": "Welcome!"}
