@@ -127,6 +127,6 @@ async def login_session(response: Response, credentials: HTTPBasicCredentials = 
 @app.post("/login_token", status_code=201)
 async def login_token(credentials: HTTPBasicCredentials = Depends(security)):
     if credentials.username == username and credentials.password == password:
-        return {"token", f'{username}:{password}:{datetime.datetime.now()}'}
+        return {"token": f'{username}:{password}:{datetime.datetime.now()}'}
     else:
         raise HTTPException(401, "Invalid creds")
