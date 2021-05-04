@@ -4,10 +4,17 @@ from hashlib import sha512
 from typing import List
 
 from fastapi import FastAPI, Request
+from fastapi.params import Depends
 from fastapi.responses import JSONResponse
+from fastapi.templating import Jinja2Templates
+from starlette.exceptions import HTTPException
+from starlette.responses import HTMLResponse, Response
+from fastapi.security import HTTPBasic, HTTPBasicCredentials
 
 app = FastAPI()
 
+
+# week 1
 
 @app.get("/")
 def hello_world():
@@ -89,3 +96,37 @@ def patient(id: int):
         return appointment[0]
     else:
         return JSONResponse(status_code=404)
+
+
+# week 3
+# 3.1
+templates = Jinja2Templates(directory="templates")
+
+
+@app.get("/hello", response_class=HTMLResponse)
+async def read_item(request: Request):
+    return templates.TemplateResponse("hello.html", {"request": request, "date_str": datetime.date.today().isoformat()})
+
+
+# 3.2
+
+security = HTTPBasic()
+username = "4dm1n"
+password = "NotSoSecurePa$$"
+
+
+@app.post("/login_session", status_code=201)
+async def login_session(response: Response, credentials: HTTPBasicCredentials = Depends(security)):
+    if credentials.username == username and credentials.password == password:
+        response.set_cookie(key="session_token", value=f'{username}:{password}:{datetime.datetime.now()}')
+        return "logged in"
+    else:
+        raise HTTPException(401, "Invalid creds")
+
+
+@app.post("/login_token", status_code=201)
+async def login_token(credentials: HTTPBasicCredentials = Depends(security)):
+    if credentials.username == username and credentials.password == password:
+        return {"token", f'{username}:{password}:{datetime.datetime.now()}'}
+    else:
+        raise HTTPException(401, "Invalid creds")
