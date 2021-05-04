@@ -6,10 +6,10 @@ from typing import List, Optional
 from fastapi import FastAPI, Request
 from fastapi.params import Depends, Cookie
 from fastapi.responses import JSONResponse
+from fastapi.security import HTTPBasic, HTTPBasicCredentials
 from fastapi.templating import Jinja2Templates
 from starlette.exceptions import HTTPException
-from starlette.responses import HTMLResponse, Response
-from fastapi.security import HTTPBasic, HTTPBasicCredentials
+from starlette.responses import HTMLResponse, Response, PlainTextResponse
 
 app = FastAPI()
 
@@ -147,7 +147,7 @@ def welcome_session(format: Optional[str] = None, session_token: Optional[str] =
         elif format == "html":
             return HTMLResponse(content="<h1>Welcome!</h1>")
         else:
-            return "Welcome!"
+            return PlainTextResponse("Welcome!")
     raise HTTPException(401, "Not authorized")
 
 
@@ -159,5 +159,5 @@ def welcome_session(format: Optional[str] = None, token: Optional[str] = None):
         elif format == "html":
             return HTMLResponse(content="<h1>Welcome!</h1>")
         else:
-            return "Welcome!"
+            return PlainTextResponse("Welcome!")
     raise HTTPException(401, "Not authorized")
