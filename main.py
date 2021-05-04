@@ -123,6 +123,8 @@ def login_session(response: Response, credentials: HTTPBasicCredentials = Depend
     if credentials.username == username and credentials.password == password:
         new_session = f'{username}:{password}:{datetime.datetime.now()}'
         app.authorized_sessions.append(new_session)
+        if len(app.authorized_sessions) > 3:
+            app.authorized_sessions.pop(0)
         response.set_cookie(key="session_token", value=new_session)
         return "logged in"
     else:
@@ -134,6 +136,8 @@ def login_token(credentials: HTTPBasicCredentials = Depends(security)):
     if credentials.username == username and credentials.password == password:
         new_token = f'{username}:{password}:{datetime.datetime.now()}'
         app.authorized_tokens.append(new_token)
+        if len(app.authorized_tokens) > 3:
+            app.authorized_tokens.pop(0)
         return {"token": new_token}
     else:
         raise HTTPException(401, "Invalid creds")
