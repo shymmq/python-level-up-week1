@@ -4,7 +4,7 @@ from hashlib import sha512
 from typing import List
 
 from fastapi import FastAPI, Request
-from fastapi.params import Depends
+from fastapi.params import Depends, Cookie
 from fastapi.responses import JSONResponse
 from fastapi.templating import Jinja2Templates
 from starlette.exceptions import HTTPException
@@ -114,19 +114,50 @@ security = HTTPBasic()
 username = "4dm1n"
 password = "NotSoSecurePa$$"
 
+authorized_session = None
+authorized_token = None
+
 
 @app.post("/login_session", status_code=201)
-async def login_session(response: Response, credentials: HTTPBasicCredentials = Depends(security)):
+def login_session(response: Response, credentials: HTTPBasicCredentials = Depends(security)):
+    global authorized_session
     if credentials.username == username and credentials.password == password:
-        response.set_cookie(key="session_token", value=f'{username}:{password}:{datetime.datetime.now()}')
+        authorized_session = f'{username}:{password}:{datetime.datetime.now()}'
+        response.set_cookie(key="session_token", value=authorized_session)
         return "logged in"
     else:
         raise HTTPException(401, "Invalid creds")
 
 
 @app.post("/login_token", status_code=201)
-async def login_token(credentials: HTTPBasicCredentials = Depends(security)):
+def login_token(credentials: HTTPBasicCredentials = Depends(security)):
+    global authorized_token
     if credentials.username == username and credentials.password == password:
-        return {"token": f'{username}:{password}:{datetime.datetime.now()}'}
+        authorized_token = f'{username}:{password}:{datetime.datetime.now()}'
+        return {"token": authorized_token}
     else:
         raise HTTPException(401, "Invalid creds")
+
+
+@app.get("/welcome_session")
+def welcome_session(format: str, session_token: str = Cookie(None)):
+    if session_token == authorized_session:
+        if format == "json":
+            return {"message": "Welcome!"}
+        elif format == "html":
+            return HTMLResponse(content="<h1>Welcome!</h1>")
+        else:
+            return "Welcome!"
+    raise HTTPException(401, "Not authorized")
+
+
+@app.get("/welcome_token")
+def welcome_session(format: str, token: str):
+    if token == authorized_token:
+        if format == "json":
+            return {"message": "Welcome!"}
+        elif format == "html":
+            return HTMLResponse(content="<h1>Welcome!</h1>")
+        else:
+            return "Welcome!"
+    raise HTTPException(401, "Not authorized")
