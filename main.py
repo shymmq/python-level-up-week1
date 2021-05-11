@@ -74,6 +74,13 @@ async def get_employees(limit: int = 0, offset: int = 0, order: str = None):
         raise HTTPException(status_code=400)
 
 
+@app.get("/products_extended")
+async def get_products_extended():
+    products = app.db_connection.execute(
+        "SELECT p.ProductID, p.ProductName, c.CategoryName, s.CompanyName FROM Products p LEFT JOIN Categories c on p.CategoryID = c.CategoryID LEFT JOIN Suppliers s on p.SupplierID = s.SupplierID ORDER BY p.ProductID;"
+    ).fetchall()
+    return {"products_extended": products}
+
 @app.get("/auth")
 def auth(password='', password_hash=''):
     print(sha512(str(password).encode('utf-8')).__str__())
