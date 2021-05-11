@@ -40,12 +40,11 @@ async def list_customers():
     return {'customers': data}
 
 
-@app.get("/products/{id}")
+@app.get("/products/{product_id}")
 async def get_product(response: Response, product_id: int):
     product = app.db_connection.execute(f"SELECT ProductId, ProductName FROM Products WHERE ProductID := {product_id}")
     if product:
         return {"id": product[0], "name": product[1]}
-
     else:
         raise HTTPException(404, "not found")
 
