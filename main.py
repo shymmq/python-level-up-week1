@@ -36,8 +36,9 @@ async def list_categories():
 @app.get("/customers")
 async def list_customers():
     customers = app.db_connection.execute(
-        "SELECT * FROM Customers ORDER BY CustomerID").fetchall()
-    return {"customers": [{"id": c[0], "name": c[1], "full_address": c[2]} for c in customers]}
+        "SELECT CustomerID, CompanyName, Address, PostalCode, City, Country FROM Customers ORDER BY CustomerID").fetchall()
+    return {
+        "customers": [{"id": c[0], "name": c[1], "full_address": f'{c[2]} {c[3]} {c[4]} {c[5]}'} for c in customers]}
 
 
 @app.get("/auth")
