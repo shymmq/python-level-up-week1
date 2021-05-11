@@ -50,6 +50,28 @@ async def get_product(response: Response, product_id: int):
         raise HTTPException(404, "not found")
 
 
+orders = {
+    "first_name": "FirstName",
+    "last_name": "LastName"
+}
+
+
+@app.get("/employees")
+async def get_employees(limit: int = 0, offset: int = 0, order: str = None):
+    if not (order in ['first_name', 'last_name', None]):
+        raise HTTPException(status_code=400)
+    employees = app.db_connection.execute(
+        f"SELECT EmployeeID, LastName, FirstName, City FROM Employees ORDER BY {orders.get(order, 'EmployeeID')} LIMIT {limit} OFFSET {offset};").fetchall()
+    return {
+        "employees": [{
+            "id": e[0],
+            "last_name": e[1],
+            "first_name": e[2],
+            "city": e[3]
+        } for e in employees]
+    }
+
+
 @app.get("/auth")
 def auth(password='', password_hash=''):
     print(sha512(str(password).encode('utf-8')).__str__())
