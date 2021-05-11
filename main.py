@@ -38,7 +38,20 @@ async def list_customers():
     customers = app.db_connection.execute(
         "SELECT CustomerID, CompanyName, Address, PostalCode, City, Country FROM Customers ORDER BY CustomerID").fetchall()
     return {
-        "customers": [{"id": c[0], "name": c[1], "full_address": f'{c[2]} {c[3]} {c[4]} {c[5]}'} for c in customers]}
+        "customers": [{
+                "id": c[0],
+                "name": c[1],
+                "full_address": " ".join(filter(None, c[2:6]))
+            } for c in customers]}
+
+
+@app.get("/products/{id}")
+async def get_product(response: Response, id: int):
+    product = app.db_connection.execute("SELECT ProductId, ProductName FROM Products WHERE ProductID := id")
+    if product:
+        return product
+    else:
+        raise HTTPException(404, "not found")
 
 
 @app.get("/auth")
