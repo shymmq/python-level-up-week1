@@ -35,12 +35,9 @@ async def list_categories():
 @app.get("/customers")
 async def list_customers():
     app.db_connection.row_factory = sqlite3.Row
-    customers = app.db_connection.execute(
-        """SELECT CustomerId AS id, CompanyName AS name,
-                  Address || ' ' || PostalCode || ' ' || City || ' ' || Country AS full_address FROM customers order by id""").fetchall()
-    return {
-        "customers": customers
-        }
+    data = app.db_connection.execute(
+        "SELECT CustomerId AS id, CompanyName AS name, Address || ' ' || PostalCode || ' ' || City || ' ' || Country AS full_address FROM customers").fetchall()
+    return {'customers': data}
 
 
 @app.get("/products/{id}")
