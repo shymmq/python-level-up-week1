@@ -1,49 +1,42 @@
 import dataclasses
-import datetime
+import sqlite3
+from datetime import datetime
 from hashlib import sha512
 from typing import List, Optional
 
-from fastapi import FastAPI, Request
-from fastapi.params import Depends, Cookie
-from fastapi.responses import JSONResponse
+from fastapi import Cookie, FastAPI, HTTPException, Request, Response, Depends
+from fastapi.responses import HTMLResponse
 from fastapi.security import HTTPBasic, HTTPBasicCredentials
-from fastapi.templating import Jinja2Templates
-from starlette.exceptions import HTTPException
-from starlette.responses import HTMLResponse, Response, PlainTextResponse, RedirectResponse
+from starlette.responses import JSONResponse, PlainTextResponse, RedirectResponse
+from starlette.templating import Jinja2Templates
 
 app = FastAPI()
+app.db_connection = None
 
 
-# week 1
-
-@app.get("/")
-def hello_world():
-    return {"message": "Hello world!"}
-
-
-@app.get("/method")
-def method():
-    return {"method": "GET"}
+@app.on_event("startup")
+async def startup():
+    app.db_connection = sqlite3.connect("northwind.db")
+    app.db_connection.text_factory = lambda b: b.decode(errors="ignore")  # northwind specific
 
 
-@app.post("/method", status_code=201)
-def method():
-    return {"method": "POST"}
+@app.on_event("shutdown")
+async def shutdown():
+    app.db_connection.close()
 
 
-@app.put("/method")
-def method():
-    return {"method": "PUT"}
+@app.get("/categories")
+async def list_categories():
+    categories = app.db_connection.execute(
+        "SELECT CategoryID, CategoryName FROM Categories ORDER BY CategoryID").fetchall()
+    return {"categories": [{"id": c[0], "name": c[1]} for c in categories]}
 
 
-@app.options("/method")
-def method():
-    return {"method": "OPTIONS"}
-
-
-@app.delete("/method")
-def method():
-    return {"method": "DELETE"}
+@app.get("/customers")
+async def list_customers():
+    customers = app.db_connection.execute(
+        "SELECT * FROM Customers ORDER BY CustomerID").fetchall()
+    return {"customers": customers}
 
 
 @app.get("/auth")
@@ -142,6 +135,7 @@ def login_token(credentials: HTTPBasicCredentials = Depends(security)):
     else:
         raise HTTPException(401, "Invalid creds")
 
+
 # 3.3
 
 @app.get("/welcome_session")
@@ -166,6 +160,7 @@ def welcome_token(format: Optional[str] = None, token: Optional[str] = None):
         else:
             return PlainTextResponse("Welcome!")
     raise HTTPException(401, "Not authorized")
+
 
 # 3.4
 
