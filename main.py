@@ -11,7 +11,6 @@ from starlette.responses import JSONResponse, PlainTextResponse, RedirectRespons
 from starlette.templating import Jinja2Templates
 
 app = FastAPI()
-app.db_connection = None
 
 
 @app.on_event("startup")
@@ -35,21 +34,21 @@ async def list_categories():
 
 @app.get("/customers")
 async def list_customers():
+    app.db_connection.row_factory = sqlite3.Row
     customers = app.db_connection.execute(
-        "SELECT CustomerID, CompanyName, Address, PostalCode, City, Country FROM Customers ORDER BY CustomerID").fetchall()
+        """SELECT CustomerId AS id, CompanyName AS name,
+                  Address || ' ' || PostalCode || ' ' || City || ' ' || Country AS full_address FROM customers order by id""").fetchall()
     return {
-        "customers": [{
-                "id": c[0],
-                "name": c[1],
-                "full_address": " ".join(filter(None, c[2:6]))
-            } for c in customers]}
+        "customers": customers
+        }
 
 
 @app.get("/products/{id}")
-async def get_product(response: Response, id: int):
-    product = app.db_connection.execute("SELECT ProductId, ProductName FROM Products WHERE ProductID := id")
+async def get_product(response: Response, product_id: int):
+    product = app.db_connection.execute(f"SELECT ProductId, ProductName FROM Products WHERE ProductID := {product_id}")
     if product:
-        return product
+        return {"id": product[0], "name": product[1]}
+
     else:
         raise HTTPException(404, "not found")
 
