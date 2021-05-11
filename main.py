@@ -25,6 +25,7 @@ async def shutdown():
     app.db_connection.close()
 
 
+# 4.1
 @app.get("/categories")
 async def list_categories():
     categories = app.db_connection.execute(
@@ -36,7 +37,7 @@ async def list_categories():
 async def list_customers():
     customers = app.db_connection.execute(
         "SELECT * FROM Customers ORDER BY CustomerID").fetchall()
-    return {"customers": customers}
+    return {"customers": [{"id": c[0], "name": c[1], "full_address": c[2]} for c in customers]}
 
 
 @app.get("/auth")
