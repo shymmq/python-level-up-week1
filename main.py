@@ -79,7 +79,8 @@ async def get_products_extended():
     products = app.db_connection.execute(
         "SELECT p.ProductID, p.ProductName, c.CategoryName, s.CompanyName FROM Products p LEFT JOIN Categories c on p.CategoryID = c.CategoryID LEFT JOIN Suppliers s on p.SupplierID = s.SupplierID ORDER BY p.ProductID;"
     ).fetchall()
-    return {"products_extended": products}
+    return {"products_extended": [{"id": p[0], "name": p[1], "category": p[2], "supplier": p[3]} for p in products]}
+
 
 @app.get("/auth")
 def auth(password='', password_hash=''):
